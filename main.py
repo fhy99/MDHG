@@ -6,25 +6,25 @@ import argparse
 import pickle
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default='Tmall', help='dataset name: retailrocket/diginetica/Nowplaying/sample')
-parser.add_argument('--epoch', type=int, default=20, help='number of epochs to train for')
+parser.add_argument('--epoch', type=int, default=10, help='number of epochs to train for')
 parser.add_argument('--batchSize', type=int, default=100, help='input batch size')
 parser.add_argument('--embSize', type=int, default=100, help='embedding size')
 parser.add_argument('--l2', type=float, default=1e-5, help='l2 penalty')
-parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
+parser.add_argument('--lr', type=float, default=0.0005, help='learning rate')
 parser.add_argument('--layer', type=int, default=2, help='the number of layer used')
 parser.add_argument('--beta', type=float, default=0.005, help='ssl task maginitude')
-parser.add_argument('--lam', type=float, default=0.0001, help='diff task maginitude')
+parser.add_argument('--lam', type=float, default=0.0001, help='ssl task maginitude')
 parser.add_argument('--eps', type=float, default=0.2, help='eps')
-parser.add_argument('--K1', type=int, default=80, help='numbers')
-parser.add_argument('--K2', type=int, default=50, help='numbers')
-parser.add_argument('--K3', type=int, default=20, help='numbers')
+parser.add_argument('--K1', type=int, default=40, help='numbers')
+parser.add_argument('--K2', type=int, default=40, help='numbers')
+parser.add_argument('--K3', type=int, default=40, help='numbers')
 parser.add_argument('--dropout', type=float, default=0.5, help='dropout rate')
 parser.add_argument('--gpu_id', type=int, default=0, help='gpu_id')
 parser.add_argument('--alpha', type=float, default=0.2, help='Alpha for the leaky_relu.')
 
 opt = parser.parse_args()
 print(opt)
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+#os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 torch.cuda.set_device(opt.gpu_id)
 # torch.device('cpu')
 
@@ -46,8 +46,8 @@ def init_seed(seed=None):
     torch.cuda.manual_seed_all(seed)
 
 def main():
-    #exp_seed = 2023
-    #init_seed(exp_seed)
+    exp_seed = 2025
+    init_seed(exp_seed)
     train_data = pickle.load(open('datasets/' + opt.dataset + '/train.txt', 'rb'))
     test_data = pickle.load(open('datasets/' + opt.dataset + '/test.txt', 'rb'))
     all_train = pickle.load(open('datasets/' + opt.dataset + '/all_train_seq.txt', 'rb'))

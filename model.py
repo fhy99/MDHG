@@ -66,8 +66,8 @@ class ItemConv(Module):
             H1 = trans_to_cuda(self.w_i2['weight_item%d' % channel])(H1)
             H1 = torch.softmax(H1, dim=1)  # shape: [n_node, K]
 
-            h = H1.T.mul(adj)  # shape: [n_node, K]
-            h = h.mul(1.0 / torch.sum(h, dim=0))
+            h = H1.T.multiply(adj)  # shape: [n_node, K]
+            h = h.multiply(1.0 / torch.sum(h, dim=0))
         
             h = h @ item_embeddings  # shape: [K, emb_size]
             h = H1 @ h  # shape: [n_node, emb_size]
@@ -75,7 +75,7 @@ class ItemConv(Module):
             final.append(F.normalize(item_embeddings, dim=-1, p=2))
             finalh.append(F.normalize(h, dim=-1, p=2))
 
-        item_embeddings = torch.sum(torch.stack(final), 0) / (self.layers + 1)
+        item_embeddings = np.sum(final, 0)/(self.layers+1)
         hs = torch.sum(torch.stack(finalh), 0) / (self.layers)
         return item_embeddings, hs
 
@@ -206,18 +206,13 @@ class MDHG(Module):
 
     def cross_view(self, hidden1, hidden2, hidden3):
 
-        channel_embeddings = [hidden1, hidden2, hidden3]
-        weights = []
-        for embedding in channel_embeddings:
-            weights.append(torch.sum(
-                torch.mul(self.attention, torch.matmul(embedding, self.attention_mat)), 1))
-        weights = torch.stack((weights[0],weights[1],weights[2]),dim=0)
+        mixed_hidden = torch.stack((hidden1, hidden2, hidden3), dim=0)
 
-        score = torch.softmax(torch.transpose(weights, 1, 0), dim=-1)
-        mixed_embeddings = 0
-        for i in range(len(weights)):
-            mixed_embeddings += torch.transpose(torch.mul(torch.transpose(score, 1, 0)[i], torch.transpose(channel_embeddings[i], 1, 0)), 1, 0)
-        return mixed_embeddings, score
+        weights = (torch.matmul(mixed_hidden, self.w_hh.unsqueeze(0)) * self.attn).sum(-1)
+        # 2, b, l, 1
+        score = F.softmax(weights, dim=0).unsqueeze(-1)
+        mixed_hidden = (mixed_hidden * score).sum(0)
+        return mixed_hidden, score
 
     def write_to_file(self, recommended_items, filename):
         with open(filename, 'a') as file:
